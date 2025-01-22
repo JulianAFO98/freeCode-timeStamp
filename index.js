@@ -3,12 +3,13 @@
 
 // init project
 var express = require('express');
+const { validateDate, isDateUnix } = require("./helpers");
 var app = express();
 
 // enable CORS (https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
 // so that your API is remotely testable by FCC 
 var cors = require('cors');
-app.use(cors({optionsSuccessStatus: 200}));  // some legacy browsers choke on 204
+app.use(cors({ optionsSuccessStatus: 200 }));  // some legacy browsers choke on 204
 
 // http://expressjs.com/en/starter/static-files.html
 app.use(express.static('public'));
@@ -21,7 +22,29 @@ app.get("/", function (req, res) {
 
 // your first API endpoint... 
 app.get("/api/hello", function (req, res) {
-  res.json({greeting: 'hello API'});
+  res.json({ greeting: 'hello API' });
+});
+
+app.get("/api/:date?", (req, res) => {
+  try {
+    let dateJson = {};
+    const { date } = req.params;
+    const isValidDate = validateDate(date);
+    if (!isValidDate) {
+      throw new Error("Invalid Date");
+    }
+    const isUnix = isDateUnix(date);
+    if (isUnix) {
+      dateJson.unix = date;
+      dateJson.utc = new Date(Number(date) * 1000).toUTCString();
+    } else {
+      dateJson.utc = new Date(date).toUTCString();;
+      dateJson.unix = Math.floor(new Date(date).getTime() / 1000);
+    }
+    res.status(200).json(dateJson);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
 });
 
 
