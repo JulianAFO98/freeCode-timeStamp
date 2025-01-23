@@ -26,22 +26,30 @@ app.get("/api/hello", function (req, res) {
 });
 
 app.get("/api/:date?", (req, res) => {
+  let dateUnix;
+  let dateUTC;
   try {
-    let dateJson = {};
     const { date } = req.params;
+    if (!date) {
+      return res.status(200).json({ unix: Math.floor(new Date().getTime()), utc: new Date() })
+    }
+
+
     const isValidDate = validateDate(date);
     if (!isValidDate) {
       throw new Error("Invalid Date");
     }
+
     const isUnix = isDateUnix(date);
     if (isUnix) {
-      dateJson.unix = date;
-      dateJson.utc = new Date(Number(date) * 1000).toUTCString();
+      dateUnix = Number(date);
+      dateUTC = new Date(Number(date)).toUTCString();
+      return res.status(200).json({ unix: dateUnix, utc: dateUTC });
     } else {
-      dateJson.utc = new Date(date).toUTCString();;
-      dateJson.unix = Math.floor(new Date(date).getTime() / 1000);
+      dateUnix = Math.floor(new Date(date).getTime());
+      dateUTC = new Date(date).toUTCString();
+      return res.status(200).json({ unix: dateUnix, utc: dateUTC });
     }
-    res.status(200).json(dateJson);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
